@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Show</title>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      #canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+      const canvas = document.querySelector('#canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setClearColor(0xa3a3a3);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 4;
+
+      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
+      camera.position.set(6, 6, 6);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+
+      /**
+       * Loaders
+       */
+      const gltfLoader = new GLTFLoader();
+      const rgbeLoader = new RGBELoader();
+
+      const scene = new THREE.Scene();
+
+      /**
+       * Environment Map
+       */
+
+      rgbeLoader.load('public/textures/environmentMaps/0.hdr', (environmentMap) => {
+        environmentMap.mapping = THREE.EquirectangularReflectionMapping;
+        scene.environment = environmentMap;
+      });
+
+      /**
+       * Models
+       */
+      let car = null;
+
+      gltfLoader.load('public/models/porsche/scene.gltf', (gltf) => {
+        const model = gltf.scene;
+        scene.add(model);
+        car = model;
+      });
+
+      function resizeRendererToDisplaySize() {
+        const canvas = renderer.domElement;
+        const width = (canvas.clientWidth * window.devicePixelRatio) | 0;
+        const height = (canvas.clientHeight * window.devicePixelRatio) | 0;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+
+      const clock = new THREE.Clock();
+
+      function tick() {
+        if (resizeRendererToDisplaySize()) {
+          const canvas = renderer.domElement;
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+
+        const deltaTime = clock.getDelta();
+
+        if (car) {
+          car.rotation.y -= deltaTime * 0.1;
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+
+      tick();
+    </script>
+  </body>
+</html>

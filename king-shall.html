@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>King Shall</title>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      #canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 60px;
+        background-color: #fefefe;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div class="progress"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/",
+          "gsap": "https://unpkg.com/gsap@3.12.2/gsap-core.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+      import gsap from 'gsap';
+
+      const canvas = document.querySelector('#canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas });
+      renderer.setClearColor(0xfefefe);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
+      camera.position.set(-1, 0, 8.7);
+      camera.lookAt(1.7, 0, 8.7);
+
+      const controls = new FirstPersonControls(camera, renderer.domElement);
+      controls.movementSpeed = 8;
+      controls.lookSpeed = 0.08;
+
+      const scene = new THREE.Scene();
+
+      const loadingManager = new THREE.LoadingManager();
+      const gltfLoader = new GLTFLoader(loadingManager);
+
+      const progress = document.querySelector('.progress');
+
+      loadingManager.onProgress = (url, loaded, total) => {
+        progress.innerText = (loaded / total) * 100 + '%';
+      };
+
+      loadingManager.onLoad = () => {
+        progress.style.display = 'none';
+      };
+
+      let position = 0;
+
+      function moveCamera(x, y, z) {
+        gsap.to(camera.position, { x, y, z, duration: 3 });
+      }
+
+      function rotateCamera(x, y, z) {
+        gsap.to(camera.rotation, { x, y, z, duration: 3.2 });
+      }
+
+      gltfLoader.load('public/models/the_king_s_hall/scene.gltf', (gltf) => {
+        const model = gltf.scene;
+        scene.add(model);
+
+        window.addEventListener('mouseup', () => {
+          switch (position) {
+            case 0:
+              moveCamera(-1.8, 1.6, 5);
+              rotateCamera(0, 0.1, 0);
+              position = 1;
+              break;
+
+            case 1:
+              moveCamera(2.8, 0, 3.6);
+              rotateCamera(0, -2, 0);
+              position = 2;
+              break;
+
+            case 2:
+              moveCamera(2.5, -0.9, 12.2);
+              rotateCamera(0.9, 0.6, -0.6);
+              position = 3;
+              break;
+
+            case 3:
+              moveCamera(-2.7, 0.6, 3.7);
+              rotateCamera(0.6, 1.9, -0.6);
+              position = 4;
+              break;
+
+            case 4:
+              moveCamera(-1.7, 0, 8.7);
+              rotateCamera(0, 4.7, 0);
+              position = 5;
+              break;
+
+            case 5:
+              moveCamera(0.5, 0.8, 10);
+              rotateCamera(0.3, 1.65, -0.3);
+              position = 0;
+          }
+        });
+      });
+
+      function resizeRendererToDisplaySize() {
+        const canvas = renderer.domElement;
+        const width = (canvas.clientWidth * window.devicePixelRatio) | 0;
+        const height = (canvas.clientHeight * window.devicePixelRatio) | 0;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+
+      const clock = new THREE.Clock();
+
+      function tick() {
+        if (resizeRendererToDisplaySize()) {
+          const canvas = renderer.domElement;
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+
+        // TIP: find the right position with the controller
+        // controls.update(clock.getDelta());
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(tick);
+      }
+
+      tick();
+    </script>
+  </body>
+</html>
